@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    {% load static %}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shoplifting Detection</title>
+    <link rel="stylesheet" type="text/css" href="{% static 'detection/styles.css' %}">
+</head>
+<body>
+    <div class="container">
+        <h1>Shoplifting Detection System</h1>
+        <p class="subtitle">Upload a video to detect suspicious activity</p>
+        
+        <div class="upload-box">
+            <form id="uploadForm" enctype="multipart/form-data">
+                <input type="file" id="videoInput" name="video" accept="video/*" required>
+                <button type="submit">Upload & Detect</button>
+            </form>
+        </div>
+        
+        <div id="result" class="result-box hidden">
+            <p>Shoplifting Probability: <span id="probability"></span></p>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById("uploadForm").addEventListener("submit", function(event) {
+            event.preventDefault();
+            let formData = new FormData();
+            formData.append("video", document.getElementById("videoInput").files[0]);
+
+            fetch("/api/detect/", {
+                method: "POST",
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                let resultBox = document.getElementById("result");
+                let probabilityText = document.getElementById("probability");
+                
+                probabilityText.innerText = (data.shoplifting_probability * 100).toFixed(2) + "%";
+                resultBox.classList.remove("hidden");
+
+                if (data.shoplifting_probability > 0.7) {
+                    resultBox.classList.add("alert-high");
+                } else if (data.shoplifting_probability > 0.4) {
+                    resultBox.classList.add("alert-medium");
+                } else {
+                    resultBox.classList.add("alert-low");
+                }
+            })
+            .catch(error => console.error(error));
+        });
+    </script>
+</body>
+</html>
